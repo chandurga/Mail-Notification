@@ -24,7 +24,6 @@ on:
 
 jobs:
   run-tests:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -43,11 +42,32 @@ jobs:
           GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
 
       - name: Test with Maven
-        run: >
-          mvn
-          -DexcludedGroups="${{ inputs.tags-of-tests-to-exclude }}"
-          -Dgroups="${{ inputs.tags-of-tests-to-include }}"
-          -DTEST_ENV="${{ inputs.test-environment }}"
-          -DTRIGGERED_BY="${{ github.event_name }}"
-          -DRUN_NAME="${{ inputs.run-name }}"
+        id: test
+        run: |
+          mvn \
+          -DexcludedGroups="${{ inputs.tags-of-tests-to-exclude }}" \
+          -Dgroups="${{ inputs.tags-of-tests-to-include }}" \
+          -DTEST_ENV="${{ inputs.test-environment }}" \
+          -DTRIGGERED_BY="${{ github.event_name }}" \
+          -DRUN_NAME="${{ inputs.run-name }}" \
           clean -B package --file pom.xml
+
+      - name: Send Email Notification
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "GitHub Actions: Test Results"
+          body: |
+            The test run has completed.
+            - Environment: ${{ inputs.test-environment }}
+            - Included Tags: ${{ inputs.tags-of-tests-to-include }}
+            - Excluded Tags: ${{ inputs.tags-of-tests-to-exclude }}
+            - Run Name: ${{ inputs.run-name }}
+            - Triggered By: ${{ github.event_name }}
+            - Job Status: ${{ job.status }}
+          to: ${{ secrets.TO_EMAIL }}
+          from: ${{ secrets.SMTP_USERNAME }}
