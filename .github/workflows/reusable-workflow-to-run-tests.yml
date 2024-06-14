@@ -56,11 +56,8 @@ jobs:
         run: |
           echo "Test Results:" > test-summary.txt
           for file in $(find . -type f -name "TEST-*.xml"); do
-            echo "Processing file: $file"
             grep "<testcase " "$file" | while IFS= read -r line; do
-              classname=$(echo "$line" | grep -o 'classname="[^"]*"' | sed 's/classname="//' | sed 's/"//')
               name=$(echo "$line" | grep -o 'name="[^"]*"' | sed 's/name="//' | sed 's/"//')
-              time=$(echo "$line" | grep -o 'time="[^"]*"' | sed 's/time="//' | sed 's/"//')
               status="passed"
               if echo "$line" | grep -q "<failure"; then
                 status="failed"
@@ -69,7 +66,7 @@ jobs:
               elif echo "$line" | grep -q "<skipped"; then
                 status="skipped"
               fi
-              echo "Name: $classname.$name, Status: $status, Time: $time seconds" >> test-summary.txt
+              echo "Name: $name, Status: $status" >> test-summary.txt
             done
           done
           cat test-summary.txt
