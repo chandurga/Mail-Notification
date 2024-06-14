@@ -48,7 +48,7 @@ jobs:
           -DTEST_ENV="${{ inputs.test-environment }}" \
           -DTRIGGERED_BY="${{ github.event_name }}" \
           -DRUN_NAME="${{ inputs.run-name }}" \
-          clean test | tee test-results.txt
+          clean test
 
       - name: Parse test results
         id: parse-results
@@ -79,7 +79,7 @@ jobs:
       - name: Read test summary
         id: read-summary
         run: |
-          test_summary=$(cat test-summary.txt)
+          test_summary=$(cat test-summary.txt | tail -n +2)
           echo "test_summary<<EOF" >> $GITHUB_ENV
           echo "$test_summary" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
