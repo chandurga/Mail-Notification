@@ -57,6 +57,16 @@ jobs:
           mkdir -p test-results
           find . -name "TEST-*.xml" -type f -exec cp {} test-results/ \;
 
+      - name: Generate test summary
+        id: generate-summary
+        run: |
+          echo "Test Results:"
+          for file in test-results/*.xml; do
+            echo "$(basename "$file")"
+            cat "$file"
+            echo ""
+          done
+
       - name: Send email notification
         if: always()
         uses: dawidd6/action-send-mail@v3
@@ -75,6 +85,6 @@ jobs:
             - Triggered By: ${{ github.event_name }}
             - Job Status: ${{ job.status }}
             - Test Results:
-              ${{ steps.collect-results.outputs.test-results }}
+              ${{ steps.generate-summary.outputs.test-results }}
           to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.SMTP_USERNAME }}
