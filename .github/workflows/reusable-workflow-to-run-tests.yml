@@ -50,32 +50,34 @@ jobs:
           -DRUN_NAME="${{ inputs.run-name }}" \
           clean test
 
-      - name: Install xmllint
-        run: sudo apt-get install -y libxml2-utils
-
-      - name: Parse test results
-        id: parse-results
+      - name: Copy test results
+        id: copy-results
         run: |
           mkdir -p surefire-reports
           find . -type f -name "TEST-*.xml" -exec cp {} surefire-reports/ \;
 
+      - name: Parse test results
+        id: parse-results
+        run: |
           echo "Test Results:" > test-summary.txt
           for file in surefire-reports/*.xml; do
             echo "Processing file: $file"  # Debugging line
-            xmllint --xpath '//testcase' $file | while IFS= read -r line; do
-              classname=$(echo "$line" | grep -o 'classname="[^"]*' | sed 's/classname="//')
-              name=$(echo "$line" | grep -o 'name="[^"]*' | sed 's/name="//')
-              time=$(echo "$line" | grep -o 'time="[^"]*' | sed 's/time="//')
-              status="passed"
-              if echo "$line" | grep -q "<failure"; then
-                status="failed"
-              elif echo "$line" | grep -q "<error"; then
-                status="error"
-              elif echo "$line" | grep -q "<skipped"; then
-                status="skipped"
+            while IFS= read -r line; do
+              if [[ $line =~ "<testcase " ]]; then
+                classname=$(echo "$line" | grep -o 'classname="[^"]*' | sed 's/classname="//')
+                name=$(echo "$line" | grep -o 'name="[^"]*' | sed 's/name="//')
+                time=$(echo "$line" | grep -o 'time="[^"]*' | sed 's/time="//')
+                status="passed"
+                if [[ $line =~ "<failure" ]]; then
+                  status="failed"
+                elif [[ $line =~ "<error" ]]; then
+                  status="error"
+                elif [[ $line =~ "<skipped" ]]; then
+                  status="skipped"
+                fi
+                echo "Name: $classname.$name, Status: $status, Time: $time seconds" >> test-summary.txt
               fi
-              echo "Name: $classname.$name, Status: $status, Time: $time seconds" >> test-summary.txt
-            done
+            done < "$file"
           done
           echo "test-summary.txt content:"  # Debugging line
           cat test-summary.txt  # Debugging line
