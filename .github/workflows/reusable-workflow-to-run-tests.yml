@@ -64,11 +64,11 @@ jobs:
                 name=$(echo "$line" | grep -o 'name="[^"]*' | sed 's/name="//')
                 time=$(echo "$line" | grep -o 'time="[^"]*' | sed 's/time="//')
                 status="passed"
-                if [[ $line =~ "<failure " ]]; then
+                if [[ $line =~ "<failure" ]]; then
                   status="failed"
-                elif [[ $line =~ "<error " ]]; then
+                elif [[ $line =~ "<error" ]]; then
                   status="error"
-                elif [[ $line =~ "<skipped " ]]; then
+                elif [[ $line =~ "<skipped" ]]; then
                   status="skipped"
                 fi
                 echo "Name: $classname.$name, Status: $status, Time: $time seconds" >> test-summary.txt
