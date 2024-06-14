@@ -57,13 +57,16 @@ jobs:
           mkdir -p test-results
           cp -r target/surefire-reports test-results/
 
+      - name: Install xsltproc
+        run: sudo apt-get install xsltproc
+
       - name: Create test summary
         id: create-summary
         run: |
           echo "Test Results:" > test-summary.txt
           for file in test-results/surefire-reports/TEST-*.xml; do
             echo "Processing $file"
-            xsltproc --output test-summary-part.txt --stringparam resultsfile "$file" test-results-summary.xsl
+            xsltproc --output test-summary-part.txt --stringparam resultsfile "$file" .github/workflows/test-results-summary.xsl
             cat test-summary-part.txt >> test-summary.txt
           done
           cat test-summary.txt
