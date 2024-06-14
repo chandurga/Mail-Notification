@@ -54,14 +54,15 @@ jobs:
         id: parse-results
         run: |
           mkdir -p surefire-reports
-          cp target/surefire-reports/*.xml surefire-reports/
+          cp -r target/surefire-reports/*.xml surefire-reports/
 
           # Install xmlstarlet
           sudo apt-get update
           sudo apt-get install -y xmlstarlet
 
           # Extract test results using xmlstarlet
-          xmlstarlet sel -T -t -m "//testcase" -v "concat(@classname, '.', @name, ', Status: ', if(failure) then 'failed' else if(error) then 'error' else if(skipped) then 'skipped' else 'passed', ', Time: ', @time)" -n surefire-reports/*.xml > test-summary.txt
+          xmlstarlet sel -T -t -m "//testcase" \
+            -v "concat(@classname, '.', @name, ', Status: ', if(failure) then 'failed' else if(error) then 'error' else if(skipped) then 'skipped' else 'passed', ', Time: ', @time)" -n surefire-reports/*.xml > test-summary.txt
 
       - name: Read test summary
         id: read-summary
@@ -89,6 +90,6 @@ jobs:
             - Triggered By: ${{ github.event_name }}
             - Job Status: ${{ job.status }}
             - Test Results:
-            ${{ env.test_summary }}
+              ${{ env.test_summary }}
           to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.SMTP_USERNAME }}
