@@ -6,17 +6,14 @@ on:
       tags-of-tests-to-include:
         required: true
         type: string
-
       tags-of-tests-to-exclude:
         required: false
         type: string
         default: "flaky, failing"
-
       test-environment:
         required: false
         type: string
         default: "STAGING"
-
       run-name:
         required: false
         type: string
@@ -50,7 +47,15 @@ jobs:
           -DTEST_ENV="${{ inputs.test-environment }}" \
           -DTRIGGERED_BY="${{ github.event_name }}" \
           -DRUN_NAME="${{ inputs.run-name }}" \
-          clean -B package --file pom.xml
+          clean -B package --file pom.xml | tee test-results.txt
+
+      - name: Read test results
+        id: read-results
+        run: |
+          test_results=$(cat test-results.txt)
+          echo "test_results<<EOF" >> $GITHUB_ENV
+          echo "$test_results" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Send Email Notification
         if: always()
@@ -69,5 +74,6 @@ jobs:
             - Run Name: ${{ inputs.run-name }}
             - Triggered By: ${{ github.event_name }}
             - Job Status: ${{ job.status }}
+            - Test Results: ${{ env.test_results }}
           to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.SMTP_USERNAME }}
