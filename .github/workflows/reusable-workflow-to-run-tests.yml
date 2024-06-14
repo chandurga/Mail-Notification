@@ -55,8 +55,13 @@ jobs:
         run: |
           mkdir -p surefire-reports
           cp target/surefire-reports/*.xml surefire-reports/
-          javac ParseTestResults.java
-          java ParseTestResults > test-summary.txt
+
+          # Install xmlstarlet
+          sudo apt-get update
+          sudo apt-get install -y xmlstarlet
+
+          # Extract test results using xmlstarlet
+          xmlstarlet sel -T -t -m "//testcase" -v "concat(@classname, '.', @name, ', Status: ', if(failure) then 'failed' else if(error) then 'error' else if(skipped) then 'skipped' else 'passed', ', Time: ', @time)" -n surefire-reports/*.xml > test-summary.txt
 
       - name: Read test summary
         id: read-summary
