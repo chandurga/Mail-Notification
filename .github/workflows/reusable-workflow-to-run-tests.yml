@@ -49,38 +49,30 @@ jobs:
           -DTRIGGERED_BY="${{ github.event_name }}" \
           -DRUN_NAME="${{ inputs.run-name }}" \
           clean test
-
-      - name: Copy test results
-        id: copy-results
-        run: |
-          mkdir -p surefire-reports
-          find . -type f -name "TEST-*.xml" -exec cp {} surefire-reports/ \;
+        continue-on-error: true
 
       - name: Parse test results
         id: parse-results
         run: |
           echo "Test Results:" > test-summary.txt
-          for file in surefire-reports/*.xml; do
-            echo "Processing file: $file"  # Debugging line
-            while IFS= read -r line; do
-              if [[ $line =~ "<testcase " ]]; then
-                classname=$(echo "$line" | grep -o 'classname="[^"]*' | sed 's/classname="//')
-                name=$(echo "$line" | grep -o 'name="[^"]*' | sed 's/name="//')
-                time=$(echo "$line" | grep -o 'time="[^"]*' | sed 's/time="//')
-                status="passed"
-                if [[ $line =~ "<failure" ]]; then
-                  status="failed"
-                elif [[ $line =~ "<error" ]]; then
-                  status="error"
-                elif [[ $line =~ "<skipped" ]]; then
-                  status="skipped"
-                fi
-                echo "Name: $classname.$name, Status: $status, Time: $time seconds" >> test-summary.txt
+          for file in $(find . -type f -name "TEST-*.xml"); do
+            echo "Processing file: $file"
+            grep "<testcase " "$file" | while IFS= read -r line; do
+              classname=$(echo "$line" | grep -o 'classname="[^"]*"' | sed 's/classname="//' | sed 's/"//')
+              name=$(echo "$line" | grep -o 'name="[^"]*"' | sed 's/name="//' | sed 's/"//')
+              time=$(echo "$line" | grep -o 'time="[^"]*"' | sed 's/time="//' | sed 's/"//')
+              status="passed"
+              if echo "$line" | grep -q "<failure"; then
+                status="failed"
+              elif echo "$line" | grep -q "<error"; then
+                status="error"
+              elif echo "$line" | grep -q "<skipped"; then
+                status="skipped"
               fi
-            done < "$file"
+              echo "Name: $classname.$name, Status: $status, Time: $time seconds" >> test-summary.txt
+            done
           done
-          echo "test-summary.txt content:"  # Debugging line
-          cat test-summary.txt  # Debugging line
+          cat test-summary.txt
 
       - name: Read test summary
         id: read-summary
