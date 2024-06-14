@@ -48,21 +48,34 @@ jobs:
           -DTEST_ENV="${{ inputs.test-environment }}" \
           -DTRIGGERED_BY="${{ github.event_name }}" \
           -DRUN_NAME="${{ inputs.run-name }}" \
-          clean -B package --file pom.xml | tee test-results.txt
+          clean test | tee test-results.txt
 
       - name: Parse test results
         id: parse-results
         run: |
           mkdir -p surefire-reports
-          cp -r target/surefire-reports/*.xml surefire-reports/
+          find . -type f -name "TEST-*.xml" -exec cp {} surefire-reports/ \;
 
-          # Install xmlstarlet
-          sudo apt-get update
-          sudo apt-get install -y xmlstarlet
-
-          # Extract test results using xmlstarlet
-          xmlstarlet sel -T -t -m "//testcase" \
-            -v "concat(@classname, '.', @name, ', Status: ', if(failure) then 'failed' else if(error) then 'error' else if(skipped) then 'skipped' else 'passed', ', Time: ', @time)" -n surefire-reports/*.xml > test-summary.txt
+          echo "Test Results:"
+          for file in surefire-reports/*.xml; do
+            echo "File: $file"
+            while IFS= read -r line; do
+              if [[ $line =~ "<testcase " ]]; then
+                classname=$(echo "$line" | grep -o 'classname="[^"]*' | sed 's/classname="//')
+                name=$(echo "$line" | grep -o 'name="[^"]*' | sed 's/name="//')
+                time=$(echo "$line" | grep -o 'time="[^"]*' | sed 's/time="//')
+                status="passed"
+                if [[ $line =~ "<failure " ]]; then
+                  status="failed"
+                elif [[ $line =~ "<error " ]]; then
+                  status="error"
+                elif [[ $line =~ "<skipped " ]]; then
+                  status="skipped"
+                fi
+                echo "Name: $classname.$name, Status: $status, Time: $time seconds"
+              fi
+            done < "$file"
+          done > test-summary.txt
 
       - name: Read test summary
         id: read-summary
