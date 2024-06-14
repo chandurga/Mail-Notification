@@ -39,7 +39,7 @@ jobs:
         env:
           GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
 
-      - name: Test with Maven
+      - name: Run tests with Maven
         id: test
         run: |
           mvn \
@@ -51,35 +51,32 @@ jobs:
           clean test
         continue-on-error: true
 
-      - name: Parse test results
-        id: parse-results
+      - name: Collect test results
+        id: collect-results
+        run: |
+          mkdir -p test-results
+          cp -r target/surefire-reports test-results/
+
+      - name: Create test summary
+        id: create-summary
         run: |
           echo "Test Results:" > test-summary.txt
-          for file in $(find . -type f -name "TEST-*.xml"); do
-            grep "<testcase " "$file" | while IFS= read -r line; do
-              name=$(echo "$line" | grep -o 'name="[^"]*"' | sed 's/name="//' | sed 's/"//')
-              status="passed"
-              if echo "$line" | grep -q "<failure"; then
-                status="failed"
-              elif echo "$line" | grep -q "<error"; then
-                status="error"
-              elif echo "$line" | grep -q "<skipped"; then
-                status="skipped"
-              fi
-              echo "Name: $name, Status: $status" >> test-summary.txt
-            done
+          for file in test-results/surefire-reports/TEST-*.xml; do
+            echo "Processing $file"
+            xsltproc --output test-summary-part.txt --stringparam resultsfile "$file" test-results-summary.xsl
+            cat test-summary-part.txt >> test-summary.txt
           done
           cat test-summary.txt
 
       - name: Read test summary
         id: read-summary
         run: |
-          test_summary=$(cat test-summary.txt | tail -n +2)
+          test_summary=$(cat test-summary.txt)
           echo "test_summary<<EOF" >> $GITHUB_ENV
           echo "$test_summary" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Send Email Notification
+      - name: Send email notification
         if: always()
         uses: dawidd6/action-send-mail@v3
         with:
