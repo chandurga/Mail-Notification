@@ -24,7 +24,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -49,12 +50,20 @@ jobs:
           -DRUN_NAME="${{ inputs.run-name }}" \
           clean -B package --file pom.xml | tee test-results.txt
 
-      - name: Read test results
-        id: read-results
+      - name: Parse test results
+        id: parse-results
         run: |
-          test_results=$(cat test-results.txt)
-          echo "test_results<<EOF" >> $GITHUB_ENV
-          echo "$test_results" >> $GITHUB_ENV
+          mkdir -p surefire-reports
+          cp target/surefire-reports/*.xml surefire-reports/
+          javac ParseTestResults.java
+          java ParseTestResults > test-summary.txt
+
+      - name: Read test summary
+        id: read-summary
+        run: |
+          test_summary=$(cat test-summary.txt)
+          echo "test_summary<<EOF" >> $GITHUB_ENV
+          echo "$test_summary" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Send Email Notification
@@ -74,6 +83,7 @@ jobs:
             - Run Name: ${{ inputs.run-name }}
             - Triggered By: ${{ github.event_name }}
             - Job Status: ${{ job.status }}
-            - Test Results: ${{ env.test_results }}
+            - Test Results:
+            ${{ env.test_summary }}
           to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.SMTP_USERNAME }}
