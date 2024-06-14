@@ -55,29 +55,7 @@ jobs:
         id: collect-results
         run: |
           mkdir -p test-results
-          cp -r target/surefire-reports test-results/
-
-      - name: Install xsltproc
-        run: sudo apt-get install xsltproc
-
-      - name: Create test summary
-        id: create-summary
-        run: |
-          echo "Test Results:" > test-summary.txt
-          for file in test-results/surefire-reports/TEST-*.xml; do
-            echo "Processing $file"
-            xsltproc --output test-summary-part.txt --stringparam resultsfile "$file" .github/workflows/test-results-summary.xsl
-            cat test-summary-part.txt >> test-summary.txt
-          done
-          cat test-summary.txt
-
-      - name: Read test summary
-        id: read-summary
-        run: |
-          test_summary=$(cat test-summary.txt)
-          echo "test_summary<<EOF" >> $GITHUB_ENV
-          echo "$test_summary" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          find . -name "TEST-*.xml" -type f -exec cp {} test-results/ \;
 
       - name: Send email notification
         if: always()
@@ -97,6 +75,6 @@ jobs:
             - Triggered By: ${{ github.event_name }}
             - Job Status: ${{ job.status }}
             - Test Results:
-              ${{ env.test_summary }}
+              ${{ steps.collect-results.outputs.test-results }}
           to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.SMTP_USERNAME }}
