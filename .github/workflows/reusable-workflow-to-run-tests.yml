@@ -50,14 +50,18 @@ jobs:
           -DRUN_NAME="${{ inputs.run-name }}" \
           clean test
 
-      - name: Parse test results
-        id: parse-results
+      - name: Copy test results
+        id: copy-results
         run: |
           mkdir -p surefire-reports
           find . -type f -name "TEST-*.xml" -exec cp {} surefire-reports/ \;
 
+      - name: Parse test results
+        id: parse-results
+        run: |
           echo "Test Results:" > test-summary.txt
           for file in surefire-reports/*.xml; do
+            echo "Processing file: $file"  # Debugging line
             while IFS= read -r line; do
               if [[ $line =~ "<testcase " ]]; then
                 classname=$(echo "$line" | grep -o 'classname="[^"]*' | sed 's/classname="//')
@@ -75,6 +79,8 @@ jobs:
               fi
             done < "$file"
           done
+          echo "test-summary.txt content:"  # Debugging line
+          cat test-summary.txt  # Debugging line
 
       - name: Read test summary
         id: read-summary
