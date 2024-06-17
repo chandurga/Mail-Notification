@@ -24,10 +24,6 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
 
-    permissions:
-      actions: none
-      contents: read
-
     steps:
       - name: Start Selenoid server
         uses: n-ton4/selenoid-github-action@master
@@ -76,12 +72,10 @@ jobs:
           total_failures=$(echo "$test_results" | grep -oP 'Failures: \d+' | awk '{print $2}')
           total_errors=$(echo "$test_results" | grep -oP 'Errors: \d+' | awk '{print $2}')
           total_skipped=$(echo "$test_results" | grep -oP 'Skipped: \d+' | awk '{print $2}')
-          test_cases=$(grep -oP '(?<=\[INFO\] ).*(?=\(.*s\))' maven-output.log | sed 's/Tests run/ | &/')
           echo "TOTAL_TESTS=$total_tests" >> $GITHUB_ENV
           echo "TOTAL_FAILURES=$total_failures" >> $GITHUB_ENV
           echo "TOTAL_ERRORS=$total_errors" >> $GITHUB_ENV
           echo "TOTAL_SKIPPED=$total_skipped" >> $GITHUB_ENV
-          echo "TEST_CASES=$test_cases" >> $GITHUB_ENV
 
       - name: Send Email Notification
         if: always()
@@ -99,9 +93,6 @@ jobs:
             Dear all,
 
             Your scheduled workflow ran successfully!
-
-            Test Results:
-            ${{ env.TEST_CASES }}
 
             Summary:
             Tests run: ${{ env.TOTAL_TESTS }}
