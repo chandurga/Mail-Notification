@@ -59,11 +59,11 @@ jobs:
 
       - name: Compile ParseTestResults Java Program
         run: |
-          javac -d . scripts/ParseTestResults.java
+          javac -d . ParseTestResults.java
 
       - name: Run ParseTestResults
         run: |
-          java scripts/ParseTestResults test-results/*.xml
+          java ParseTestResults test-results/*.xml
 
       - name: Read Test Results Summary
         id: get_summary
@@ -95,4 +95,5 @@ jobs:
             Your Automation Team
           to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.SMTP_USERNAME }}
-          attachments: test-results/*.xml
+          attachments: |
+            test-results/*.xml
