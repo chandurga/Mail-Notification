@@ -1,4 +1,4 @@
-name: Trigger Tests on a Schedule
+name: trigger tests on a Schedule
 
 on:
   schedule:
@@ -7,21 +7,15 @@ on:
   workflow_dispatch:     # This allows the workflow to be manually triggered
 
 jobs:
-  trigger-tests-on-schedule:
+  run-tests-and-send-notification:
+    name: Run Tests on Schedule and Send Notification
     runs-on: ubuntu-latest
-    name: Trigger Tests on Schedule
     steps:
       - name: Run Reusable Workflow to Run Tests
         uses: ./.github/workflows/reusable-workflow-to-run-tests.yml
         with:
-          tags-of-tests-to-include: ""   # -Dgroups="" means execute all test cases
-          tags-of-tests-to-exclude: ""   # -DexcludedGroups="" means don't exclude any test case
-          test-environment: "MAIL_NOTIFICATION"  # Optional, default value used
-          run-name: "CI"   # Optional, default value used
+          tags-of-tests-to-include: ""  # -Dgroups="" means execute all test cases
+          tags-of-tests-to-exclude: ""  # -DexcludedGroups="" means don't exclude any test case
+          test-environment: "BMT_PLUS"  # Pass test environment
+          run-name: "CI"  # Pass run name
           secrets: inherit  # Ensure secrets are passed to the reusable workflow
-        env:
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          TO_EMAIL: ${{ secrets.TO_EMAIL }}
