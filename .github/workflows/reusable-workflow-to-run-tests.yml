@@ -91,7 +91,6 @@ jobs:
         if: always()
         uses: dawidd6/action-send-mail@v3
         with:
-          connection_url: ${{ secrets.SMTP_SERVER }}
           server_address: smtp.gmail.com
           server_port: ${{ secrets.SMTP_PORT }}
           secure: true
@@ -116,3 +115,4 @@ jobs:
 
             Regards,
             Your Automation System
+      
