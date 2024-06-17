@@ -47,4 +47,4 @@ jobs:
 
             Regards,
             Your Automation System
-          to: prasadmajji33@gmail.com
+          to: ${{ secrets.TO_EMAIL }}
