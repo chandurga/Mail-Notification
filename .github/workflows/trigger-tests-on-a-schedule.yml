@@ -1,4 +1,4 @@
-name: trigger Tests on a Schedule
+name: Trigger Tests on a Schedule
 
 on:
   schedule:
@@ -10,6 +10,10 @@ jobs:
   run-tests-and-send-notification:
     name: Run Tests on Schedule and Send Notification
     runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: write
 
     steps:
       - name: Run Reusable Workflow to Run Tests
