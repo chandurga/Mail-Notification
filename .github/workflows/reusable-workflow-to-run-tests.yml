@@ -63,7 +63,7 @@ jobs:
 
       - name: Run ParseTestResults
         run: |
-          java ParseTestResults test-results/*.xml
+          java ParseTestResults test-results/*.xml > test_results_summary.txt
 
       - name: Read Test Results Summary
         id: get_summary
@@ -84,16 +84,12 @@ jobs:
           body: |
             Hello,
 
-            Please find the attached test results from the latest GitHub Actions run.
+            Please find below the summary of the latest GitHub Actions test run:
 
             Summary:
             ${{ steps.get_summary.outputs.summary }}
-
-            For a detailed view, please refer to the attached report.
 
             Best regards,
             Your Automation Team
           to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.SMTP_USERNAME }}
-          attachments: |
-            test-results/*.xml
