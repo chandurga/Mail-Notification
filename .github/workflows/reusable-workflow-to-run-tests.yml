@@ -60,11 +60,17 @@ jobs:
       - name: Generate Test Results Summary
         id: generate-summary
         run: |
+          echo "Test Results Summary:"
+          for file in test-results/*.xml; do
+            echo "$(basename "$file")"
+            awk -F '"' '/<testcase /{printf "- Test: %s - Status: %s\n", $4, $10}' "$file"
+            echo ""
+          done
+          
           passed_tests=$(grep -c '<testcase.*status="passed"' test-results/*.xml || true)
           failed_tests=$(grep -c '<testcase.*status="failed"' test-results/*.xml || true)
           skipped_tests=$(grep -c '<testcase.*status="skipped"' test-results/*.xml || true)
           
-          echo "Test Results Summary:"
           echo "- Passed: $passed_tests"
           echo "- Failed: $failed_tests"
           echo "- Skipped: $skipped_tests"
@@ -77,7 +83,7 @@ jobs:
           echo "- Total Tests Run: $total_tests"
           echo "- Overall Status: $overall_status"
           
-          echo "::set-output name=summary::Test Results Summary:\n- Passed: $passed_tests\n- Failed: $failed_tests\n- Skipped: $skipped_tests\n- Total Tests Run: $total_tests\n- Overall Status: $overall_status"
+          echo "::set-output name=summary::Test Results Summary:\n$(cat test-results/*.xml | grep -oP '(?<=<testcase classname=")[^"]*(?=" name=")[^"]*(?="[^>]* status=")[^"]*' | awk -F '"' '/<testcase /{printf "- Test: %s - Status: %s\n", $4, $10}' "$file")\n- Passed: $passed_tests\n- Failed: $failed_tests\n- Skipped: $skipped_tests\n- Total Tests Run: $total_tests\n- Overall Status: $overall_status"
 
       - name: Send email notification
         if: always()
