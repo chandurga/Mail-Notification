@@ -72,16 +72,13 @@ jobs:
           total_failures=$(echo "$test_results" | grep -oP 'Failures: \d+' | awk '{print $2}')
           total_errors=$(echo "$test_results" | grep -oP 'Errors: \d+' | awk '{print $2}')
           total_skipped=$(echo "$test_results" | grep -oP 'Skipped: \d+' | awk '{print $2}')
-          test_cases=$(grep -oP '(?<=\[INFO\] ).*(?=\(.*s\))' maven-output.log | sed 's/Tests run/ | &/')
+          test_cases=$(grep -oP '(?<=\[INFO\] Results - ).*(?= \[INFO\])' maven-output.log)
           
           echo "TOTAL_TESTS=$total_tests" >> $GITHUB_ENV
           echo "TOTAL_FAILURES=$total_failures" >> $GITHUB_ENV
           echo "TOTAL_ERRORS=$total_errors" >> $GITHUB_ENV
           echo "TOTAL_SKIPPED=$total_skipped" >> $GITHUB_ENV
           echo "TEST_CASES=$test_cases" >> $GITHUB_ENV
-
-          # Writing to output environment file
-          echo "test-cases=$test_cases" >> $GITHUB_OUTPUT
 
       - name: Update dependency graph
         if: always()

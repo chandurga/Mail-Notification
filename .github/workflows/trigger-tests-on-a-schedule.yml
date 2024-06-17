@@ -37,7 +37,7 @@ jobs:
             Your scheduled workflow ran successfully!
 
             Test Results:
-            ${{ steps.run-tests.outputs.test-cases }}
+            ${{ env.TEST_CASES }}
 
             Summary:
             Tests run: ${{ env.TOTAL_TESTS }}
