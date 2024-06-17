@@ -65,7 +65,7 @@ jobs:
             echo "$(basename "$file")"
             awk -F '"' '/<testcase /{printf "- Test: %s - Status: %s\n", $4, $10}' "$file"
             echo ""
-          done
+          done | tee summary.txt
           
           passed_tests=$(grep -c '<testcase.*status="passed"' test-results/*.xml || true)
           failed_tests=$(grep -c '<testcase.*status="failed"' test-results/*.xml || true)
@@ -83,7 +83,7 @@ jobs:
           echo "- Total Tests Run: $total_tests"
           echo "- Overall Status: $overall_status"
           
-          echo "::set-output name=summary::Test Results Summary:\n$(for file in test-results/*.xml; do awk -F '"' '/<testcase /{printf "- Test: %s - Status: %s\n", $4, $10}' "$file"; done)\n- Passed: $passed_tests\n- Failed: $failed_tests\n- Skipped: $skipped_tests\n- Total Tests Run: $total_tests\n- Overall Status: $overall_status"
+          echo "::set-output name=summary::$(cat summary.txt)"
 
       - name: Send email notification
         if: always()
