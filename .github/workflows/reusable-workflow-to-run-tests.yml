@@ -47,11 +47,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Unlock secrets
-        uses: sliteteam/github-action-git-crypt-unlock@1.2.0
-        env:
-          GIT_CRYPT_KEY: ${{ secrets.GIT_CRYPT_KEY }}
-
       - name: Test with Maven
         id: run-tests
         run: |
@@ -76,6 +71,13 @@ jobs:
           echo "TOTAL_FAILURES=$total_failures" >> $GITHUB_ENV
           echo "TOTAL_ERRORS=$total_errors" >> $GITHUB_ENV
           echo "TOTAL_SKIPPED=$total_skipped" >> $GITHUB_ENV
+
+      - name: Output test results for debug
+        run: |
+          echo "Tests run: ${{ env.TOTAL_TESTS }}"
+          echo "Failures: ${{ env.TOTAL_FAILURES }}"
+          echo "Errors: ${{ env.TOTAL_ERRORS }}"
+          echo "Skipped: ${{ env.TOTAL_SKIPPED }}"
 
       - name: Send Email Notification
         if: always()
