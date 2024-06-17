@@ -1,4 +1,4 @@
-name: reusable-workflow-to-run-tests
+name: Reusable Workflow to Run Tests
 
 on:
   workflow_call:
@@ -57,15 +57,20 @@ jobs:
           mkdir -p test-results
           find . -name "TEST-*.xml" -type f -exec cp {} test-results/ \;
 
-      - name: Generate test summary
-        id: generate-summary
+      - name: Compile ParseTestResults Java Program
         run: |
-          echo "Test Results:"
-          for file in test-results/*.xml; do
-            echo "$(basename "$file")"
-            cat "$file"
-            echo ""
-          done
+          javac -d . scripts/ParseTestResults.java
+
+      - name: Run ParseTestResults
+        run: |
+          java scripts/ParseTestResults test-results/*.xml
+
+      - name: Read Test Results Summary
+        id: get_summary
+        run: |
+          summary=$(cat test_results_summary.txt)
+          echo "::set-output name=summary::$summary"
+        shell: bash
 
       - name: Send email notification
         if: always()
@@ -77,14 +82,17 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "GitHub Actions: Test Results"
           body: |
-            The test run has completed.
-            - Environment: ${{ inputs.test-environment }}
-            - Included Tags: ${{ inputs.tags-of-tests-to-include }}
-            - Excluded Tags: ${{ inputs.tags-of-tests-to-exclude }}
-            - Run Name: ${{ inputs.run-name }}
-            - Triggered By: ${{ github.event_name }}
-            - Job Status: ${{ job.status }}
-            - Test Results:
-              ${{ steps.generate-summary.outputs.test-results }}
+            Hello,
+
+            Please find the attached test results from the latest GitHub Actions run.
+
+            Summary:
+            ${{ steps.get_summary.outputs.summary }}
+
+            For a detailed view, please refer to the attached report.
+
+            Best regards,
+            Your Automation Team
           to: ${{ secrets.TO_EMAIL }}
           from: ${{ secrets.SMTP_USERNAME }}
+          attachments: test-results/*.xml
