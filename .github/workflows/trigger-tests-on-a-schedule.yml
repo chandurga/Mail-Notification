@@ -1,4 +1,4 @@
-name: trigger-tests-on-a-schedule
+name: Trigger Tests on a Schedule
 
 on:
   schedule:
@@ -10,6 +10,7 @@ jobs:
   run-tests-and-send-notification:
     name: Run Tests on Schedule and Send Notification
     runs-on: ubuntu-latest
+
     steps:
       - name: Run Reusable Workflow to Run Tests
         uses: ./.github/workflows/reusable-workflow-to-run-tests.yml
@@ -18,7 +19,7 @@ jobs:
           tags-of-tests-to-exclude: ""  # -DexcludedGroups="" means don't exclude any test case
           test-environment: "BMT_PLUS"  # Pass test environment
           run-name: "CI"  # Pass run name
-          secrets: inherit  # Ensure secrets are passed to the reusable workflow
+        secrets: inherit  # Ensure secrets are passed to the reusable workflow
 
       - name: Send Notification
         if: always()  # Ensure this job runs regardless of the previous job's outcome
@@ -36,14 +37,13 @@ jobs:
             Your scheduled workflow ran successfully!
 
             Test Results:
-            ${{ env.TEST_CASES }}
+            ${{ steps.run-tests.outputs.test-cases }}
 
             Summary:
             Tests run: ${{ env.TOTAL_TESTS }}
             Failures: ${{ env.TOTAL_FAILURES }}
             Errors: ${{ env.TOTAL_ERRORS }}
             Skipped: ${{ env.TOTAL_SKIPPED }}
-            Flakes: 0
 
             Regards,
             Your Automation System
