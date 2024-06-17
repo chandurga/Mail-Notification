@@ -2,53 +2,26 @@ name: Trigger Tests on a Schedule
 
 on:
   schedule:
-    - cron: '41 8 1 * *'  # At 08:41 on the 1st day of every month.
-    - cron: '51 8 * * Mon'  # At 08:51 UTC every Monday.
-  workflow_dispatch:  # This allows the workflow to be manually triggered
+    - cron: '41 8 1 * *'   # At 08:41 on the 1st day of every month.
+    - cron: '51 8 * * MON' # At 08:51 UTC every Monday.
+  workflow_dispatch:     # This allows the workflow to be manually triggered
 
 jobs:
-  run-tests-and-send-notification:
-    name: Run Tests on Schedule and Send Notification
+  trigger-tests-on-schedule:
     runs-on: ubuntu-latest
-
-    permissions:
-      actions: read
-      contents: write
-
+    name: Trigger Tests on Schedule
     steps:
       - name: Run Reusable Workflow to Run Tests
         uses: ./.github/workflows/reusable-workflow-to-run-tests.yml
         with:
-          tags-of-tests-to-include: ""  # -Dgroups="" means execute all test cases
-          tags-of-tests-to-exclude: ""  # -DexcludedGroups="" means don't exclude any test case
-          test-environment: "BMT_PLUS"  # Pass test environment
-          run-name: "CI"  # Pass run name
-        secrets: inherit  # Ensure secrets are passed to the reusable workflow
-
-      - name: Send Notification
-        if: always()  # Ensure this job runs regardless of the previous job's outcome
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          from: ${{ secrets.EMAIL_USERNAME }}  # Use the same value as the username for the 'from' field
-          subject: "GitHub Actions Notification"
-          body: |
-            Dear all,
-
-            Your scheduled workflow ran successfully!
-
-            Test Results:
-            ${{ env.TEST_CASES }}
-
-            Summary:
-            Tests run: ${{ env.TOTAL_TESTS }}
-            Failures: ${{ env.TOTAL_FAILURES }}
-            Errors: ${{ env.TOTAL_ERRORS }}
-            Skipped: ${{ env.TOTAL_SKIPPED }}
-
-            Regards,
-            Your Automation System
-          to: prasadmajji33@gmail.com
+          tags-of-tests-to-include: ""   # -Dgroups="" means execute all test cases
+          tags-of-tests-to-exclude: ""   # -DexcludedGroups="" means don't exclude any test case
+          test-environment: "MAIL_NOTIFICATION"  # Optional, default value used
+          run-name: "CI"   # Optional, default value used
+          secrets: inherit  # Ensure secrets are passed to the reusable workflow
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
