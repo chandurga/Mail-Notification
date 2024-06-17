@@ -57,20 +57,27 @@ jobs:
           mkdir -p test-results
           find . -name "TEST-*.xml" -type f -exec cp {} test-results/ \;
 
-      - name: Compile ParseTestResults Java Program
+      - name: Generate Test Results Summary
+        id: generate-summary
         run: |
-          javac -d . ParseTestResults.java
-
-      - name: Run ParseTestResults
-        run: |
-          java ParseTestResults test-results/*.xml > test_results_summary.txt
-
-      - name: Read Test Results Summary
-        id: get_summary
-        run: |
-          summary=$(cat test_results_summary.txt)
-          echo "::set-output name=summary::$summary"
-        shell: bash
+          passed_tests=$(grep -c '<testcase.*status="passed"' test-results/*.xml || true)
+          failed_tests=$(grep -c '<testcase.*status="failed"' test-results/*.xml || true)
+          skipped_tests=$(grep -c '<testcase.*status="skipped"' test-results/*.xml || true)
+          
+          echo "Test Results Summary:"
+          echo "- Passed: $passed_tests"
+          echo "- Failed: $failed_tests"
+          echo "- Skipped: $skipped_tests"
+          
+          total_tests=$(( passed_tests + failed_tests + skipped_tests ))
+          overall_status="Passed"
+          if [ "$failed_tests" -gt 0 ]; then
+            overall_status="Failed"
+          fi
+          echo "- Total Tests Run: $total_tests"
+          echo "- Overall Status: $overall_status"
+          
+          echo "::set-output name=summary::Test Results Summary:\n- Passed: $passed_tests\n- Failed: $failed_tests\n- Skipped: $skipped_tests\n- Total Tests Run: $total_tests\n- Overall Status: $overall_status"
 
       - name: Send email notification
         if: always()
@@ -86,8 +93,7 @@ jobs:
 
             Please find below the summary of the latest GitHub Actions test run:
 
-            Summary:
-            ${{ steps.get_summary.outputs.summary }}
+            ${{ steps.generate-summary.outputs.summary }}
 
             Best regards,
             Your Automation Team
