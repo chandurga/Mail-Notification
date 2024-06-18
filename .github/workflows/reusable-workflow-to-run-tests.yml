@@ -56,17 +56,18 @@ jobs:
             -DTEST_ENV="${{ inputs.test-environment }}" \
             -DRUN_NAME="${{ inputs.run-name }}" \
             -Dselenide.remote=http://localhost:4444/wd/hub \
-            -DTRIGGERED_BY=${{ github.event_name }} \
-            | tee maven-output.log
+            -DTRIGGERED_BY=${{ github.event_name }}
 
-      - name: Parse test results
-        id: parse-results
+      - name: Retrieve Selenide Reports
+        id: retrieve-reports
         run: |
-          test_results=$(cat maven-output.log)
-          total_tests=$(echo "$test_results" | grep -oP 'Tests run: \d+' | awk '{print $3}')
-          total_failures=$(echo "$test_results" | grep -oP 'Failures: \d+' | awk '{print $2}')
-          total_errors=$(echo "$test_results" | grep -oP 'Errors: \d+' | awk '{print $2}')
-          total_skipped=$(echo "$test_results" | grep -oP 'Skipped: \d+' | awk '{print $2}')
+          report_dir="path/to/selenoid/reports"  # Update this to your actual reports folder
+          # Assuming Selenide generates a summary.json file
+          test_results=$(cat $report_dir/summary.json)
+          total_tests=$(echo "$test_results" | jq '.total')
+          total_failures=$(echo "$test_results" | jq '.failures')
+          total_errors=$(echo "$test_results" | jq '.errors')
+          total_skipped=$(echo "$test_results" | jq '.skipped')
           echo "TOTAL_TESTS=$total_tests" >> $GITHUB_ENV
           echo "TOTAL_FAILURES=$total_failures" >> $GITHUB_ENV
           echo "TOTAL_ERRORS=$total_errors" >> $GITHUB_ENV

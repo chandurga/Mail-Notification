@@ -1,4 +1,4 @@
-# Zero
+# Mail-Notification
 
 Zero is our feature rich, core test automation framework, that can be used as an underlying automation framework
 for any/and all kind of test automation frameworks (such as API, Browser, Mobile App).
